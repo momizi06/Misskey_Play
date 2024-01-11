@@ -1,5 +1,7 @@
 /// @ 0.16.0
 // VALORANTのヨルがサイトにエントリーできるか観察するPlay
+
+// 2024.01.11 v0.0.3 バグ修正(正しいおまけが表示されるように)
 // 2024.01.11 v0.0.2 おまけを追加
 // 2024.01.11 v0.0.1 初版
 
@@ -90,8 +92,10 @@ let dice = diceRandom(1 100)
 let choiceRandom = Math:gen_rng(`{USER_ID}{Date:day()}{Date:month()}{Date:year()}`)
 
 // 結果テキスト
-let result = if (dice < 87) fail_choices[choiceRandom(0 (fail_choices.len - 1))] elif (dice > 86 && dice < 100) success_choices[choiceRandom(0 (success_choices.len - 1))] else lucky_choices[choiceRandom(0 (lucky_choices.len - 1))]
-let omake = if (dice < 87) fail_omake[choiceRandom(0 (fail_omake.len - 1))] elif (dice > 99) lucky_omake[choiceRandom(0 (lucky_omake.len - 1))]
+let resultIndex = if (dice < 87) choiceRandom(0 (fail_choices.len - 1)) elif (dice > 86 && dice < 100) choiceRandom(0 (success_choices.len - 1)) else choiceRandom(0 (lucky_choices.len - 1))
+let result = if (dice < 87) fail_choices[resultIndex] elif (dice > 86 && dice < 100) success_choices[resultIndex] else lucky_choices[resultIndex]
+
+let omake = if (dice < 87) fail_omake[resultIndex] elif (dice > 99) lucky_omake[resultIndex]
 
 
 // UIを表示
