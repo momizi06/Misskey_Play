@@ -1,0 +1,119 @@
+/// @ 0.16.0
+// VALORANTのヨルがサイトにエントリーできるか観察するPlay
+// 2024.01.11 v0.0.2 おまけを追加
+// 2024.01.11 v0.0.1 初版
+
+
+// 86%(失敗)
+let fail_choices = [
+"残念！自分で投げたフラッシュで何も見えないよ！💥:meowcry:
+倒されちゃった！失敗！"
+"残念！テレポート先には銃を構えた敵が！$[flip :meowfingerguns:]:meowcry:
+倒されちゃった！失敗！"
+"残念！味方が付いてきてくれなかったよ！:meowcry::blank::meow_whistle:
+倒されちゃった！失敗！"
+"残念！間違えてフェイクテレポートしちゃった！:meow_facepalm:
+失敗！"
+"残念！ポータルが壊されちゃった！これじゃエントリーできないよ！:explosion::blank:$[flip :meow_yikes:]
+失敗！"
+"残念！KAY/Oのアルティメットで何もスキルが使えなくなっちゃった！:blobcat_frustration:
+失敗！"
+]
+
+// 失敗解説
+let fail_omake = [
+"<small>おまけ(解説)
+フラッシュはまともに受けるとしばらく何も見えなくなってしまいます。
+ヨルはエントリー(敵陣地に侵入)する際、テレポートとフラッシュを組み合わせてエントリーすることが多いですが、割とよくこういった事故が起きます。</small>"
+"<small>おまけ(解説)
+ヨルあるあるです。フラッシュを投げてテレポートエントリー(テレポートで敵陣地に侵入)する時によく起きます。
+フラッシュを受けてない敵にテレポート後の硬直時間を狙われてやられてしまうことが多いため、実際にやるときはだいたい祈りながらテレポートしています。</small>"
+"<small>おまけ(解説)
+ヨルあるあるです。ヨルのスキルはどれも後ろの味方をサポートするのには向かないスキルです。
+このため、残りの味方が足止めを食らうとこれが頻繁に起きます。</small>"
+"<small>おまけ(解説)
+ヨルあるあるです。フェイクテレポートは敵にも聞こえる偽のテレポート音を出すことで注意を向かせるものです。
+ただ、たまに間違えてフェイクテレポートを発動してしまい、エントリー(敵陣地に侵入)失敗なんてことも……</small>"
+"<small>おまけ(解説)
+詰みです。ヨルがエントリー(敵陣地に侵入)するときは基本的にテレポートを使ってすることが多いです。
+しかし、このテレポートに必要なゲートは敵からも見える上、普通に壊されます。そうすると徒歩で無理やりエントリーするしかなくなってしまうので非常に困ります。</small>"
+"<small>おまけ(解説)
+あるあるです。VALORANTのキャラであるKAY/O(ケイオー)は、敵のスキルを数秒ほど使えなくする能力を持っています。
+こうなると効果時間が終わるまで待つしかなくなりますが、そのころには別の場所にいた敵が集まっているので……</small>"
+]
+
+// 15%(成功)
+let success_choices = [
+"あ！味方のジェットと一緒にエントリーできてサイトをとれたよ！:blobcat_mudamudamuda:💨
+成功！"
+"あ！味方のレイズと一緒にエントリーできてサイトをとれたよ！:blobcat_mudamudamuda::explosion:
+成功！"
+"あ！味方のレイナと一緒にエントリーできてサイトをとれたよ！:blobcat_mudamudamuda::blobcat_mudamudamuda:
+成功！"
+"あ！味方のフェニックスと一緒にエントリーできてサイトをとれたよ！:blobcat_mudamudamuda::blaze:
+成功！"
+"あ！味方のネオンと一緒にエントリーできてサイトをとれたよ！:blobcat_mudamudamuda:⚡
+成功！"
+"あ！味方のアイソと一緒にエントリーできてサイトをとれたよ！:blobcat_mudamudamuda:🛡
+成功！"
+"あ！フラッシュテレポートで無防備な敵を倒してサイトをとれたよ！:blobcatrainbow:
+成功！"
+]
+
+// 1%(大成功)
+let lucky_choices = [
+"$[tada.speed=0s :blobcatevil: < 俺がやる]
+あ！アルティメットで敵の背後を取ってそのままACEを取れた！！！:blobcat_mudamudamuda:
+$[sparkle 大成功！！！]"
+"$[tada.speed=0s $[flip :meowfingerguns:]:blank:$[ruby :blobcatsweatflips: どっち？？？]:blank::meowfingerguns:]
+あ！デコイの振りをしたら成功してそのままサイト取れちゃった！！！
+$[sparkle 大成功！！！]"
+]
+
+// 大成功解説
+let lucky_omake = [
+"<small>おまけ(解説)
+ヨルのアルティメットは、簡単に言えば透明人間になって索敵や敵の後ろを取りに行くというものです。
+ただし、効果時間中でも一応敵には近くにいることは分かるようになっているのと、銃が使えない(スキルはOK)ため終了後の硬直時間でやられることもよくあります。
+しかし、うまく使えば非常に強力なスキルであり、ACE(自分一人で敵を全員倒す)も狙えます。</small>"
+"<small>おまけ(解説)
+一歩間違えたら戦犯です。
+ヨルのスキルには自分とそっくりなデコイを出すものがあります。このデコイは、まっすぐに歩いていき、敵に撃たれると強力なフラッシュを出します。
+ここではそのデコイと本物が同時に歩いていき、そのまま騙された敵を本物が倒すことに成功しました。</small>"
+]
+
+// シードが「ユーザーID+今日の日付」である乱数生成器を用意(結果選択用)
+let diceRandom = Math:gen_rng(`{USER_ID}{Date:year()}{Date:month()}{Date:day()}`)
+let dice = diceRandom(1 100)
+
+// シードが「ユーザーID+今日の日付」である乱数生成器を用意(内容選択用)
+let choiceRandom = Math:gen_rng(`{USER_ID}{Date:day()}{Date:month()}{Date:year()}`)
+
+// 結果テキスト
+let result = if (dice < 87) fail_choices[choiceRandom(0 (fail_choices.len - 1))] elif (dice > 86 && dice < 100) success_choices[choiceRandom(0 (success_choices.len - 1))] else lucky_choices[choiceRandom(0 (lucky_choices.len - 1))]
+let omake = if (dice < 87) fail_omake[choiceRandom(0 (fail_omake.len - 1))] elif (dice > 99) lucky_omake[choiceRandom(0 (lucky_omake.len - 1))]
+
+
+// UIを表示
+Ui:render([
+	Ui:C:container({
+		align: 'center'
+		children: [
+			Ui:C:mfm({ text: result })
+			Ui:C:postFormButton({
+				text: "LOCK IN"
+				rounded: true
+				primary: true
+				form: {
+					text: `{result}{Str:lf}{Str:lf}#ヨルのイケてるエントリー占い{Str:lf}{THIS_URL}`
+				}
+			})
+		]
+	})
+    Ui:C:container({
+		align: 'left'
+		children: [
+			Ui:C:mfm({ text: `{Str:lf}{Str:lf}{omake}` })
+		]
+	})
+])
