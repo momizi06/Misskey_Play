@@ -1,6 +1,7 @@
 /// @ 0.16.0
 // VALORANTのヨルがサイトにエントリーできるか観察するPlay
 
+// 2024.01.22 v0.0.4 成功におまけを追加, 成功の確率を正しいものに修正(13% -> 15%), 大成功のパターンを1つ追加, コードの整理
 // 2024.01.11 v0.0.3 バグ修正(正しいおまけが表示されるように)
 // 2024.01.11 v0.0.2 おまけを追加
 // 2024.01.11 v0.0.1 初版
@@ -62,6 +63,39 @@ let success_choices = [
 成功！"
 ]
 
+// 成功解説
+let success_omake = [
+"<small>おまけ(解説)
+ジェットは風を操ることができるキャラです。
+スキルが瞬間的な移動、および数秒間敵から自分の位置を隠せるスモークとエントリーの際に非常に強力です。
+ちなみに作者は全く使えません。</small>"
+"<small>おまけ(解説)
+レイズはとにかく爆発を使うキャラです。
+ブラストパック(小型爆弾)を使用した立体的な動き、グレネードで自身が動けるエリアを広げるなど、非常にアグレッシブかつアクティブに戦えるキャラです。
+ちなみに作者はブラストパックが下手すぎて使えません。</small>"
+"<small>おまけ(解説)
+レイナは……かなり特殊なキャラです。
+スキルは数秒間見ている敵に対し視界を奪う目を出すものと、自分が倒した敵の魂で回復や数秒間安全に退避ができるものです。
+このため、キルを量産できる人のレイナは誰にも止められません。ちなみに作者はキルが取れないので使えません。</small>"
+"<small>おまけ(解説)
+フェニックスは炎を操るキャラです。
+炎の壁を出して敵からの視界を遮ったり、カーブするフラッシュで敵の行動力を奪ったりと初心者にも扱いやすいキャラです。
+また、自分の炎であれば回復もできるため継戦能力も持ち合わせています。ちなみに作者はフラッシュが下手すぎて使えません。</small>"
+"<small>おまけ(解説)
+ネオンは電気を操るキャラです。
+また、スキルで通常よりも早く移動したり、敵からの視界を遮る壁を作ったりと迅速な制圧に長けています。
+ちなみに作者は敵の前にスキルで突っ込んで死ぬためまともに使えません。</small>"
+"<small>おまけ(解説)
+アイソは敵の弾を防ぐことができるキャラです。
+特に1対1の状況で輝くスキルが多く、うまい人のアイソは割と手が付けられません。その代償としてエイム力が常に求められます。
+ちなみに作者はエイムが下手すぎて使えません。</small>"
+"<small>おまけ(解説)
+ヨルの基本となるエントリーの方法です。
+これが成功したとしても、後続の味方が来てくれるかはわからず、またサイト内で敵の攻撃に耐えなければいけたいため非常につらいです。
+今回は成功しました。やったね</small>"
+]
+
+
 // 1%(大成功)
 let lucky_choices = [
 "$[tada.speed=0s :blobcatevil: < 俺がやる]
@@ -70,6 +104,10 @@ $[sparkle 大成功！！！]"
 "$[tada.speed=0s $[flip :meowfingerguns:]:blank:$[ruby :blobcatsweatflips: どっち？？？]:blank::meowfingerguns:]
 あ！デコイの振りをしたら成功してそのままサイト取れちゃった！！！
 $[sparkle 大成功！！！]"
+"<center>$[bg.color=d3373a $[fg.color=fbecec $[font.monospace $[tada.speed=0s **チート使用者を検知しました**]
+
+対戦中止
+<small>チート利用者を処分し、参加中のゲームをキャンセルしました。このゲームの勝敗はどのプレイヤーにも記録されません</small>]]]</center>"
 ]
 
 // 大成功解説
@@ -82,20 +120,43 @@ let lucky_omake = [
 一歩間違えたら戦犯です。
 ヨルのスキルには自分とそっくりなデコイを出すものがあります。このデコイは、まっすぐに歩いていき、敵に撃たれると強力なフラッシュを出します。
 ここではそのデコイと本物が同時に歩いていき、そのまま騙された敵を本物が倒すことに成功しました。</small>"
+"<small>おまけ(解説)
+あらま、めったに見ない画面ですが、どうやら敵か味方にチーター(ずるをする人)がいたようです。
+VALORANTはチートの報告が入った瞬間に対象プレーヤーのPCに対して調査が入り、チートが確認されればその時点で試合がなかったことになります。
+さらに対象者は基本的にBAN(アクセス禁止)になります。……もしかしてあなたじゃないですよね？</small>"
 ]
+
+// 乱数の最大値
+let maxNumber = 100
+
+// 失敗になる範囲の上限
+let failNumber = 84
+
+// 成功になる範囲の上限
+let succNumber = 99
+
+// 変数と乱数の数値の関係
+// dice:     | 1 ~ failNumber | (failNumber + 1) ~ succNumber | (succNumber + 1) ~ maxNumber |
+// 判定:     | 失敗           | 成功                          | 大成功                       |
+// diceRoll: | 0              | 1                             | 2                            |
+
 
 // シードが「ユーザーID+今日の日付」である乱数生成器を用意(結果選択用)
 let diceRandom = Math:gen_rng(`{USER_ID}{Date:year()}{Date:month()}{Date:day()}`)
-let dice = diceRandom(1 100)
+let dice = diceRandom(1 maxNumber)
 
 // シードが「ユーザーID+今日の日付」である乱数生成器を用意(内容選択用)
 let choiceRandom = Math:gen_rng(`{USER_ID}{Date:day()}{Date:month()}{Date:year()}`)
 
-// 結果テキスト
-let resultIndex = if (dice < 87) choiceRandom(0 (fail_choices.len - 1)) elif (dice > 86 && dice < 100) choiceRandom(0 (success_choices.len - 1)) else choiceRandom(0 (lucky_choices.len - 1))
-let result = if (dice < 87) fail_choices[resultIndex] elif (dice > 86 && dice < 100) success_choices[resultIndex] else lucky_choices[resultIndex]
+// 判定
+let diceRoll = if (dice < (failNumber + 1)) 0 elif (dice > failNumber && dice < (succNumber + 1)) 1 else 2
 
-let omake = if (dice < 87) fail_omake[resultIndex] elif (dice > 99) lucky_omake[resultIndex]
+
+// 結果テキスト
+let resultIndex = if (diceRoll == 0) choiceRandom(0 (fail_choices.len - 1)) elif (diceRoll == 1) choiceRandom(0 (success_choices.len - 1)) else choiceRandom(0 (lucky_choices.len - 1))
+let result = if (diceRoll == 0) fail_choices[resultIndex] elif (diceRoll == 1) success_choices[resultIndex] else lucky_choices[resultIndex]
+
+let omake = if (diceRoll == 0) fail_omake[resultIndex] elif (diceRoll == 1) success_omake[resultIndex] else lucky_omake[resultIndex]
 
 
 // UIを表示
@@ -114,7 +175,7 @@ Ui:render([
 			})
 		]
 	})
-    Ui:C:container({
+	Ui:C:container({
 		align: 'left'
 		children: [
 			Ui:C:mfm({ text: `{Str:lf}{Str:lf}{omake}` })
