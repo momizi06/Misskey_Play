@@ -1,13 +1,14 @@
 /// @ 0.16.0
 // VALORANTのヨルがサイトにエントリーできるか観察するPlay
 
+// 2024.01.29 v0.0.5 クラッチ枠(3%)を追加, それに従い失敗の確率を引き下げ(84% -> 81%)
 // 2024.01.22 v0.0.4 成功におまけを追加, 成功の確率を正しいものに修正(13% -> 15%), 大成功のパターンを1つ追加, コードの整理
 // 2024.01.11 v0.0.3 バグ修正(正しいおまけが表示されるように)
 // 2024.01.11 v0.0.2 おまけを追加
 // 2024.01.11 v0.0.1 初版
 
 
-// 86%(失敗)
+// 81%(失敗)
 let fail_choices = [
 "残念！自分で投げたフラッシュで何も見えないよ！💥:meowcry:
 倒されちゃった！失敗！"
@@ -95,6 +96,37 @@ let success_omake = [
 今回は成功しました。やったね</small>"
 ]
 
+// 3%(クラッチ)
+let clutch_choices = [
+"<center>
+$[position.y=-11.5 $[spin.left,speed=.1s,delay=4.1s $[spin.speed=.1s,delay=4.15s $[rotate.deg=180 なんと1人で残りの敵をみんな倒しちゃった！！！クラッチ成功！！！
+$[tada.speed=0s :superplay:]]
+
+
+
+
+
+
+
+$[position.y=-2.75 :uwa_xtu:味方が全員やられちゃった！！！]]]]
+$[position.y=-24 $[spin.left,speed=.2s,delay=3s $[spin.speed=.2s,delay=3.1s $[spin.left,speed=.1s,delay=4s $[spin.speed=.1s,delay=4.05s $[rotate.deg=180 $[tada.speed=0s :blobcatevil: < 俺がやる]]
+
+
+
+
+
+
+]]]]]
+</center>"
+]
+
+// クラッチ開設
+let clutch_omake = [
+"<small>おまけ(解説)
+まさかの大逆転です。
+VALORANTでは1対複数の状況から勝つことをクラッチ(Clutch)と呼びます。成功するとめちゃくちゃ雰囲気爆上がりです。
+やったね！！！</small>"
+]
 
 // 1%(大成功)
 let lucky_choices = [
@@ -130,15 +162,19 @@ VALORANTはチートの報告が入った瞬間に対象プレーヤーのPCに�
 let maxNumber = 100
 
 // 失敗になる範囲の上限
-let failNumber = 84
+let failNumber = 81
 
 // 成功になる範囲の上限
-let succNumber = 99
+let succNumber = 96
+
+// クラッチになる範囲の上限
+let clutchNumber = 99
+
 
 // 変数と乱数の数値の関係
-// dice:     | 1 ~ failNumber | (failNumber + 1) ~ succNumber | (succNumber + 1) ~ maxNumber |
-// 判定:     | 失敗           | 成功                          | 大成功                       |
-// diceRoll: | 0              | 1                             | 2                            |
+// dice:     | 1 ~ failNumber | (failNumber + 1) ~ succNumber | (succNumber + 1) ~ clutchNumber | (clutchNumber + 1) ~ maxNumber |
+// 判定:     | 失敗           | 成功                          | クラッチ                        | 大成功                         |
+// diceRoll: | 0              | 1                             | 2                               | 3                              |
 
 
 // シードが「ユーザーID+今日の日付」である乱数生成器を用意(結果選択用)
@@ -149,14 +185,14 @@ let dice = diceRandom(1 maxNumber)
 let choiceRandom = Math:gen_rng(`{USER_ID}{Date:day()}{Date:month()}{Date:year()}`)
 
 // 判定
-let diceRoll = if (dice < (failNumber + 1)) 0 elif (dice > failNumber && dice < (succNumber + 1)) 1 else 2
+let diceRoll = if (dice < (failNumber + 1)) 0 elif (dice > failNumber && dice < (succNumber + 1)) 1 elif (dice > succNumber && dice < (clutchNumber + 1)) 2 else 3
 
 
 // 結果テキスト
-let resultIndex = if (diceRoll == 0) choiceRandom(0 (fail_choices.len - 1)) elif (diceRoll == 1) choiceRandom(0 (success_choices.len - 1)) else choiceRandom(0 (lucky_choices.len - 1))
-let result = if (diceRoll == 0) fail_choices[resultIndex] elif (diceRoll == 1) success_choices[resultIndex] else lucky_choices[resultIndex]
+let resultIndex = if (diceRoll == 0) choiceRandom(0 (fail_choices.len - 1)) elif (diceRoll == 1) choiceRandom(0 (success_choices.len - 1)) elif (diceRoll == 2) choiceRandom(0 (clutch_choices.len - 1)) else choiceRandom(0 (lucky_choices.len - 1))
+let result = if (diceRoll == 0) fail_choices[resultIndex] elif (diceRoll == 1) success_choices[resultIndex] elif (diceRoll == 2) clutch_choices[resultIndex] else lucky_choices[resultIndex]
 
-let omake = if (diceRoll == 0) fail_omake[resultIndex] elif (diceRoll == 1) success_omake[resultIndex] else lucky_omake[resultIndex]
+let omake = if (diceRoll == 0) fail_omake[resultIndex] elif (diceRoll == 1) success_omake[resultIndex] elif (diceRoll == 2) clutch_omake[resultIndex] else lucky_omake[resultIndex]
 
 
 // UIを表示
@@ -167,7 +203,7 @@ Ui:render([
 			Ui:C:mfm({ text: result })
 			Ui:C:postFormButton({
 				text: "LOCK IN"
-				rounded: true
+				rounded: false
 				primary: true
 				form: {
 					text: `{result}{Str:lf}{Str:lf}#ヨルのイケてるエントリー占い{Str:lf}{THIS_URL}`
