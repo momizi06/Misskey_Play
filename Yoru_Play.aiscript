@@ -1,6 +1,7 @@
 /// @ 0.16.0
 // VALORANTのヨルがサイトにエントリーできるか観察するPlay
 
+// 2024.01.29 v0.0.6 クラッチ枠のMFMの破綻を修正
 // 2024.01.29 v0.0.5 クラッチ枠(3%)を追加, それに従い失敗の確率を引き下げ(84% -> 81%)
 // 2024.01.22 v0.0.4 成功におまけを追加, 成功の確率を正しいものに修正(13% -> 15%), 大成功のパターンを1つ追加, コードの整理
 // 2024.01.11 v0.0.3 バグ修正(正しいおまけが表示されるように)
@@ -108,8 +109,11 @@ $[tada.speed=0s :superplay:]]
 
 
 
-$[position.y=-2.75 :uwa_xtu:味方が全員やられちゃった！！！]]]]
-$[position.y=-24 $[spin.left,speed=.2s,delay=3s $[spin.speed=.2s,delay=3.1s $[spin.left,speed=.1s,delay=4s $[spin.speed=.1s,delay=4.05s $[rotate.deg=180 $[tada.speed=0s :blobcatevil: < 俺がやる]]
+$[position.y=-2 :uwa_xtu:味方が全員やられちゃった！！！]]]]
+$[position.y=-27 $[spin.left,speed=.2s,delay=3s $[spin.speed=.2s,delay=3.1s $[spin.left,speed=.1s,delay=4s $[spin.speed=.1s,delay=4.05s $[rotate.deg=180 $[tada.speed=0s :blobcatevil: < 俺がやる]]
+
+
+
 
 
 
