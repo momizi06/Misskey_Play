@@ -3,6 +3,7 @@
 // @momizi06@misskey.io
 
 // --- Changelog ---
+// 2024.10.07 v0.0.3 バグ修正(誕生日を9980年以降に設定すると結果が不適切な値を取る)
 // 2024.10.07 v0.0.2 ゼロ埋め関数を追加, バグ修正(一部の環境で実行ができない, 結果が不適切)
 // 2024.10.07 v0.0.1 初版
 
@@ -16,25 +17,12 @@
 // ---------------
 
 
-@zeroPadding(num) {  // 1桁の数字を2桁に変換する関数
-    if num < 10 {
-        return `0{num}`
-    } else {
-        return `{num}`
-    }
+// Thanks to @Aterterterter@misskey.io
+// https://misskey.io/notes/9z24nsnnutl40h5b
+@zero_pad(s, k){
+  return `{Arr:create(k-`{s}`.len, "0").join()}{s}`
 }
 
-@zeroPadding_year(num) {  // 1桁の数字を2桁に変換する関数
-    if num < 10 {
-        return `000{num}`
-    } elif num < 100 {
-        return `00{num}`
-    } elif num < 1000 {
-        return `0{num}`
-    } else {
-        return `{num}`
-    }
-}
 
 // メイン関数
 @main(name, instance, birth, isLogin){  // isLoginはログインしているかどうかを判断するための変数なので消さないで
@@ -64,16 +52,16 @@
     let userbirth_num = Date:parse(userbirth) // 生年月日を数値に変換
     let birthdata = { // 生年月日を年、月、日に分ける
         year: Date:year(userbirth_num)
-        month: zeroPadding(Date:month(userbirth_num))
-        day: zeroPadding(Date:day(userbirth_num))
+        month: zero_pad(Date:month(userbirth_num), 2)
+        day: zero_pad(Date:day(userbirth_num), 2)
     }
     let nowdata = { // 現在の年、月、日を取得
-        year: zeroPadding_year(Date:year())
-        month: zeroPadding(Date:month())
-        day: zeroPadding(Date:day())
+        year: zero_pad(Date:year(), 5)
+        month: zero_pad(Date:month(), 2)
+        day: zero_pad(Date:day(), 2)
     }
     
-    let limityear = zeroPadding_year(birthdata.year + 20) // 20歳の誕生日の年を取得
+    let limityear = zero_pad(birthdata.year + 20, 5) // 20歳の誕生日の年を取得
     let limit_num = Date:parse(`{limityear}-{birthdata.month}-{birthdata.day}`) // 20歳の誕生日の数値を取得
     let now_num = Date:parse(`{nowdata.year}-{nowdata.month}-{nowdata.day}`) // 現在の日付を数値に変換
     
