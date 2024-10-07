@@ -1,0 +1,324 @@
+/// @ 0.18.0
+// お酒が飲める年齢までの日数
+// @momizi06@misskey.io
+
+// 2024.10.07 v0.0.1 初版
+
+// --- License ---
+// MIT License
+// Copyright (c) 2024 momizi06 (@momizi06@misskey.io)
+// https://github.com/momizi06/Misskey_Play/blob/main/LICENSE
+// ---------------
+// This program contains third-party programs. For more information, 
+// See https://github.com/momizi06/Misskey_Play/blob/main/ThirdPartyNotices.txt
+// ---------------
+
+
+// メイン関数
+@main(name, instance, birth, isLogin){  // isLoginはログインしているかどうかを判断するための変数なので消さないで
+    var userbirth = '' // ユーザーの生年月日
+    var result = ''  // 生年月日
+
+    if isLogin == false { // 未ログイン時は入力された名前を使う
+        if birth == null { // 生年月日が入力されていない場合(外部インスタンスのユーザーIDとインスタンスURLが入力されている場合)
+            let prop = { // ユーザー情報取得用のプロパティ
+                username: name;
+                host: instance;
+            }
+            let temp = Mk:api("users/show", prop)
+            userbirth = temp.birthday    
+        } else { // 生年月日が入力されている場合
+            userbirth = birth
+        }
+    } else { // ログイン時はログインユーザーの生年月日を使う
+        let prop = {
+            username: name;
+        }
+
+        let temp = Mk:api("users/show", prop)
+        userbirth = temp.birthday // ログインユーザーの生年月日を取得
+    }
+
+    let userbirth_num = Date:parse(userbirth) // 生年月日を数値に変換
+    let birthdata = { // 生年月日を年、月、日に分ける
+        year: Date:year(userbirth_num)
+        month: Date:month(userbirth_num)
+        day: Date:day(userbirth_num)
+    }
+    let nowdata = { // 現在の年、月、日を取得
+        year: Date:year()
+        month: Date:month()
+        day: Date:day()
+    }
+    let limityear = birthdata.year + 20 // 20歳の誕生日の年を取得
+    let limit_num = Date:parse(`{limityear}-{birthdata.month}-{birthdata.day}`) // 20歳の誕生日の数値を取得
+    let now_num = Date:parse(`{nowdata.year}-{nowdata.month}-{nowdata.day}`) // 現在の日付を数値に変換
+    result = (limit_num - now_num) / 86400000 // 20歳の誕生日までの日数を計算
+
+    // ------
+    // ここまで自由に処理できる場所
+
+    // 最終的にTLに投稿される文字列
+    // 投稿される文言を編集したい時はここをいじる
+    let postText = `お酒を飲めるようになるまであと{result}日{Str:lf}#お酒が飲めるまでの日数{Str:lf}{THIS_URL}`
+
+    postProcessing(postText, isLogin)
+}
+
+
+// ここから下手に触ったら壊れるところ
+
+// メイン処理後の処理
+@postProcessing(postText, isLogin) {
+    var instanceDomain = ""
+
+    if isLogin == true { //ログインしている場合はそのままフォームを表示
+        Ui:render([
+            Ui:C:container({
+                align: 'center'
+                children: [
+                    Ui:C:mfm({ text: `{postText}` })
+                    Ui:C:postFormButton({
+                        text: "LOCK IN"
+                        rounded: false
+                        primary: true
+                        form: {
+                            text: `{postText}`
+                        }
+                    })
+                ]
+            })
+        ])
+    } else { // 未ログイン時はURL生成用のUIを表示
+        let encodedPostText = encodeURIComponent(postText)  // 最終的に投稿される文言をURLエンコード
+        Ui:render([
+            Ui:C:container({
+                align: 'center'
+                children: [
+                    Ui:C:container({
+                        align: 'center'
+                        children: [
+                            Ui:C:mfm({ text: `{postText}` })
+                        ]
+                    })
+                    Ui:C:folder({
+                        opened: true
+                        title: "共有"
+                        children: [
+                            Ui:C:container({
+                                align: 'center'
+                                children: [
+                                    Ui:C:container({
+                                        align: 'center'
+                                        children: [
+                                            Ui:C:mfm({ text: `[Misskey-Hub経由で共有する](https://misskey-hub.net/share?text={encodedPostText})`, size: 1.5}) // Misskey-Hub経由共有リンク
+                                        ]
+                                    })
+                                    Ui:C:container({
+                                        align: 'center'
+                                        children: [
+                                            Ui:C:mfm({ text: '指定したサーバーで投稿できるURLを生成できます' }) // 説明
+                                            Ui:C:mfm({
+                                                text: if Mk:load("inputInstance") != null {
+                                                    instanceDomain = Mk:load("inputInstance")
+                                                    `[投稿用リンク<small>({instanceDomain})</small>](<https://{instanceDomain}/share?text={encodedPostText}>)`
+                                                } else {
+                                                    ``
+                                                }
+                                                size: 1.5
+                                                } 'link') // 後でURLを表示するためのUI要素
+                                            Ui:C:textInput({
+                                                onInput: @(text){ instanceDomain = text } //入力時に変数に入力された文字列を代入
+                                                default:  if Mk:load("inputInstance") == null {
+                                                            ""
+                                                        } else {
+                                                            Mk:load("inputInstance")// 以前入力された名前をデフォルトにする
+                                                        }
+                                                label: '投稿したいサーバーのドメインを入力'
+                                                caption: '例）misskey.io, koliosky.com, chpk.kur0den.net'
+                                            })
+                                            Ui:C:button({
+                                                text: '投稿用URLを生成する' // URL生成ボタン
+                                                onClick: @(){ //ボタン押下時にURL更新を実行
+                                                    if instanceDomain == '' {
+                                                        if Mk:load("inputInstance") != null {
+                                                            instanceDomain =  Mk:load("inputInstance")
+                                                        }
+                                                    } else {
+                                                        Mk:save("inputInstance", instanceDomain) // 入力されたドメインを保存
+                                                    }
+                                                    if instanceDomain == '' {
+                                                        Ui:get('link').update({text: `インスタンスドメインを指定してください`}) // 日本語以外の記号(<>など)はURLエンコードする必要あり
+                                                    } else {
+                                                        Ui:get('link').update({text: `[投稿用リンク](<https://{instanceDomain}/share?text={encodedPostText}>)`}) // 日本語以外の記号(<>など)はURLエンコードする必要あり
+                                                    }
+                                                } // URLを生成・更新
+                                                primary: true
+                                                rounded: true
+                                            })
+                                        ]
+                                    })
+                                    Ui:C:container({
+                                        align: 'center'
+                                        children: [
+                                            Ui:C:mfm({ text: '以下のボタンを押すと、投稿用のフォームが表示されます'}) // 説明
+                                            Ui:C:button({
+                                                text: 'コピー用のフォームを表示する' // コピー用フォーム表示ボタン
+                                                onClick: @(){ //ボタン押下時にフォーム表示を実行
+                                                    Ui:get('copyButton').update({
+                                                        align: "center"
+                                                        children: [
+                                                            Ui:C:mfm({ text: `\`\`\`{Str:lf}{postText}{Str:lf}\`\`\``}) // 説明
+                                                        ]
+                                                    })
+                                                    } // 投稿フォーム表示
+                                                primary: false
+                                                rounded: true
+                                                })
+                                        ]
+                                    }, "copyButton")
+                                ]
+                            })
+                        ]
+                    })
+                ]
+            })
+        ])
+    }
+}
+
+// メイン表示前の処理
+@preProcessing() {
+    var name = ''  // ユーザー名
+    var instance = ''  // インスタンスURL
+    var birth = ''  // 生年月日
+    var isLogin = true  // ログインしているかどうか
+
+    if USER_ID == null { //未ログイン状態(リモートからの実行とか)かどうかをIDがnullかどうかで判断
+        isLogin = false
+        Ui:render([         //ユーザー名送信用のフォームを表示
+            Ui:C:container({
+                align: 'center'
+                children: [
+                    Ui:C:textInput({
+                        onInput: @(text){
+                            name = text
+                        } //入力時に変数に入力された文字列を代入
+                        default: if Mk:load("inputName") == null {
+                                    ""
+                                } else {
+                                    Mk:load("inputName")// 以前入力された名前をデフォルトにする
+                                }
+                        label: 'ユーザー名を入力 (例: momizi06)'
+                        caption: '設定されている生年月日の取得に使用します' // 名前を入力する理由を書いておく
+                    })
+                    Ui:C:textInput({
+                        onInput: @(text){
+                            instance = text
+                        } //入力時に変数に入力された文字列を代入
+                        default: if Mk:load("inputInstance") == null {
+                                    ""
+                                } else {
+                                    Mk:load("inputInstance")// 以前入力された名前をデフォルトにする
+                                }
+                        label: 'インスタンスURLを入力 (例: misskey.io)'
+                        caption: '設定されている生年月日の取得に使用します' // 名前を入力する理由を書いておく
+                    })
+                    Ui:C:textInput({
+                        onInput: @(text){
+                            birth = text
+                        } //入力時に変数に入力された文字列を代入
+                        default: if Mk:load("inputBirth") == null {
+                                    ""
+                                } else {
+                                    Mk:load("inputBirth")// 以前入力された名前をデフォルトにする
+                                }
+                        label: '生年月日を入力 (例: 2000-09-25)'
+                        caption: '上2つを使用しない場合生年月日の情報として使用します' // 名前を入力する理由を書いておく
+                    })
+                    Ui:C:buttons({
+                        buttons: [
+                            {
+                                text: 'LOCK IN' // 入力確定用
+                                onClick: @(){
+                                    if (name == "" && instance == "" && birth == "") { // 何も入力されていない場合
+                                        if (Mk:load("inputName") == null) && (Mk:load("inputInstance") == null) && (Mk:load("inputBirth") == null) { // 以前のデータがない場合
+                                            name = null
+                                            instance = null
+                                            birth = '2000-01-01'
+                                        } else { // 以前のデータがある場合
+                                            name = Mk:load("inputName")
+                                            instance = Mk:load("inputInstance")
+                                            birth = Mk:load("inputBirth")
+                                        }
+                                    }
+
+                                    if (name != "" && instance != "") { // ユーザー名とインスタンスURLが入力されている場合
+                                        birth = null
+                                    }
+
+                                    
+                                    
+                                    Mk:save("inputName", name) // 入力された名前を保存
+                                    Mk:save("inputInstance", instance) // 入力されたインスタンスURLを保存
+                                    Mk:save("inputBirth", birth) // 入力された生年月日を保存
+                                   
+                                    main(name, instance, birth, isLogin)
+                                }
+                                primary: true // 確定側をprimaryに
+                                rounded: true
+                            }
+                        ]
+                    })
+                ]
+            })
+
+
+        ])
+    } else {
+        name = USER_USERNAME  // ログイン時はユーザー名を引数に、isLoginがTrueのままメインを実行
+        instance = 'null'
+        birth = 'null'
+        main(name, instance, birth, isLogin)
+    }
+}
+
+// URLエンコード関数
+@encodeURIComponent(content) {
+    var utf8Arr = []  // UTF-8に変換したあとの配列
+    let noEncode = [34, 37, 45, 46, 48, 49, 50, 51, 52, 53,
+                    54, 55, 56, 57, 65, 66, 67, 68, 69, 70,
+                    71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+                    81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
+                    92, 94, 95, 96, 97, 98, 99, 100, 101, 102,
+                    103, 104, 105, 106, 107, 108, 109, 110,
+                    111, 112, 113, 114, 115, 116, 117, 118,
+                    119, 120, 121, 122, 123, 124, 125, 126] // URLエンコードしない文字のUTF-8コード
+
+
+    each let v, content.to_arr() {
+        utf8Arr.push(v.to_utf8_byte_arr())  // 文字区切りの配列にした後にutf8に変換して配列に追加
+    }
+
+    var urlStr = ""  // 最終的に返す文字列
+    each let a, utf8Arr {
+        if a.len == 1 {  // 1バイト文字の場合
+            if noEncode.incl(a[0]) {  // エンコードしない文字コードの場合
+                let nomalStr = Str:from_utf8_bytes(a)  // そのまま文字列に変換
+                urlStr = `{urlStr}{nomalStr}`  // 文字列に追加
+                continue  // 次の文字へ
+            }
+        }
+        each let v, a {  // エンコードする1バイト文字/2バイト文字以上の場合
+            var hexCode = Num:to_hex(v)  // 16進数に変換
+            if hexCode.len == 1 {  // 1桁の場合
+                hexCode = `0{hexCode}`  // 0埋め
+            }
+            urlStr = `{urlStr}%{hexCode}`  // 文字列に追加
+        }
+    }
+    return urlStr  // 最終的な文字列を返す
+}
+
+// preProcessingを実行
+preProcessing()
